@@ -1,0 +1,13 @@
+package com.ridehailing.uber_system;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class UberSystemApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
