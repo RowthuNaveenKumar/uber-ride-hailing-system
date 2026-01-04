@@ -2,6 +2,7 @@ package com.ridehailing.uber_system.controller;
 
 import com.ridehailing.uber_system.dto.DriverLocationUpdateRequest;
 import com.ridehailing.uber_system.dto.NearbyDriverResponse;
+import com.ridehailing.uber_system.model.DriverLocation;
 import com.ridehailing.uber_system.service.DriverLocationService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -19,15 +20,19 @@ public class DriverLocationController {
     }
 
     @PostMapping("/update")
-    public String updateLocation(Authentication authentication,
-                                 @RequestBody DriverLocationUpdateRequest request){
-        String email=authentication.getName();
-        return locationService.updateLocation(email,request);
+    public String updateLocation(Authentication authentication, @RequestBody DriverLocationUpdateRequest request) {
+        String email = authentication.getName();
+        return locationService.updateLocation(email, request);
     }
 
     @GetMapping("/nearby")
-    public List<NearbyDriverResponse> nearbyDrivers(@RequestParam double lat,@RequestParam double lng){
-        return locationService.findNearbyDrivers(lat,lng);
+    public List<NearbyDriverResponse> nearbyDrivers(@RequestParam double lat, @RequestParam double lng) {
+        return locationService.findNearbyDrivers(lat, lng);
+    }
+
+    @GetMapping("/ride/{rideId}")
+    public DriverLocation getDriverLocationForRide(@PathVariable Long rideId, Authentication auth) {
+        return locationService.getDriverLocationForRide(rideId, auth.getName());
     }
 
 }

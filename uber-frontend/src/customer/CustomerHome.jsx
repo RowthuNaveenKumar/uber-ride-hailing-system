@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { requestRide, getRideStatus } from "../api/rideApi";
+import { requestRide, getRideStatus, getDriverLocation } from "../api/rideApi";
 
 const CustomerHome = () => {
   const [pickupLat, setPickupLat] = useState("");
   const [pickupLng, setPickupLng] = useState("");
   const [dropLat, setDropLat] = useState("");
   const [dropLng, setDropLng] = useState("");
+
+  const [driverLocation, setDriverLocation] = useState(null);
 
   const [ride, setRide] = useState(null);
   const [error, setError] = useState("");
@@ -42,6 +44,22 @@ const CustomerHome = () => {
     }, 4000);
     return () => clearInterval(interval);
   }, [ride?.rideId]);
+
+  // Poll driver location when ride STARTED
+  useEffect(() => {
+    if (!ride || ride.status !== "STARTED") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const loc = await getDriverLocation(ride.rideId || ride.id);
+        setDriverLocation(loc);
+      } catch (err) {
+        console.error("Failed to fetch driver location");
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [ride?.status, ride?.rideId]);
 
   return (
     <div>
@@ -84,6 +102,14 @@ const CustomerHome = () => {
           {ride.status === "ASSIGNED" && <p>Driver assigned 🚗</p>}
           {ride.status === "STARTED" && <p>Ride started 🟢</p>}
           {ride.status === "COMPLETED" && <p>Ride completed ✅</p>}
+        </div>
+      )}
+      {driverLocation && (
+        <div>
+          <h4>🚗 Driver Live Location</h4>
+          <p>Latitude: {driverLocation.latitude}</p>
+          <p>Longitude: {driverLocation.longitude}</p>
+          <p>Last updated: {driverLocation.lastUpdated}</p>
         </div>
       )}
     </div>

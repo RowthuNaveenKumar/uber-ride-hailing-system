@@ -41,17 +41,23 @@ public class SecurityConfig {
                                 "/app/**"
                         ).permitAll()
 
-                        // 🌍 PUBLIC (Customer uses this)
+                        // 🌍 PUBLIC
                         .requestMatchers("/driver/location/nearby").permitAll()
 
-                        // 🚗 DRIVER
-                        .requestMatchers("/driver/location/update").hasRole("DRIVER")
-                        .requestMatchers("/driver/**").hasRole("DRIVER")
-                        .requestMatchers("/ride/driver/**").hasRole("DRIVER")
-
-                        // 👤 CUSTOMER
+                        // 👤 CUSTOMER (MOST SPECIFIC FIRST)
+                        .requestMatchers("/driver/location/ride/**").hasRole("CUSTOMER")
                         .requestMatchers("/ride/view/**").hasRole("CUSTOMER")
+
+                        // 🚗 DRIVER (SPECIFIC)
+                        .requestMatchers("/ride/driver/**").hasRole("DRIVER")
+                        .requestMatchers("/driver/location/update").hasRole("DRIVER")
+
+                        // 👤 CUSTOMER (GENERIC — AFTER driver-specific)
                         .requestMatchers("/ride/**").hasRole("CUSTOMER")
+
+                        // 🚗 DRIVER (GENERIC — LAST)
+                        .requestMatchers("/driver/**").hasRole("DRIVER")
+
 
                         .anyRequest().authenticated()
                 )
@@ -61,7 +67,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

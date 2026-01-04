@@ -9,3 +9,8 @@ export const getRideStatus = async (rideId) => {
   const res = await api.get(`/ride/view/${rideId}`);
   return res.data;
 };
+
+export const getDriverLocation =async(rideId)=>{
+  const res=await api.get(`/driver/location/ride/${rideId}`);
+  return res.data;
+}
