@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { requestRide } from "../api/rideApi";
+import { useState, useEffect } from "react";
+import { requestRide, getRideStatus } from "../api/rideApi";
 
 const CustomerHome = () => {
   const [pickupLat, setPickupLat] = useState("");
@@ -9,6 +9,7 @@ const CustomerHome = () => {
 
   const [ride, setRide] = useState(null);
   const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
   const handleRequestRide = async () => {
     setError("");
@@ -25,6 +26,22 @@ const CustomerHome = () => {
       setError("No drivers available or request failed");
     }
   };
+
+  useEffect(() => {
+    if (!ride?.rideId) return;
+    const interval = setInterval(async () => {
+      try {
+        const updatedRide = await getRideStatus(ride.rideId);
+        setRide(updatedRide);
+        if (updatedRide.status === "COMPLETED") {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Error fetching ride status", err);
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [ride?.rideId]);
 
   return (
     <div>
@@ -57,10 +74,16 @@ const CustomerHome = () => {
       {error && <p style={{ color: "red" }}>{error}</p>}
       {ride && (
         <div>
-          <h3>Ride Assigned</h3>
-          <p>Ride ID: {ride.rideId}</p>
-          <p>Driver: {ride.driverName}</p>
+          <h3>Ride Details</h3>
+          <p>Ride ID: {ride.rideId || ride.id}</p>
+
+          {ride.driverName && <p>Driver: {ride.driverName}</p>}
+
           <p>Status: {ride.status}</p>
+
+          {ride.status === "ASSIGNED" && <p>Driver assigned 🚗</p>}
+          {ride.status === "STARTED" && <p>Ride started 🟢</p>}
+          {ride.status === "COMPLETED" && <p>Ride completed ✅</p>}
         </div>
       )}
     </div>
