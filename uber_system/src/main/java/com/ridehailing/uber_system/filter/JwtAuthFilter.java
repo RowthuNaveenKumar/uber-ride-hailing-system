@@ -63,6 +63,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         System.out.println("ROLE  = " + role);
         System.out.println("AUTHORITIES = " + authority.getAuthority());
 
+        System.out.println("ROLE FROM TOKEN = " + role);
+        System.out.println("FINAL AUTHORITY = ROLE_" + role);
+
+
         filterChain.doFilter(request, response);
     }
 }

@@ -13,8 +13,10 @@ import com.ridehailing.uber_system.repository.UserRepository;
 import com.ridehailing.uber_system.service.DriverLocationService;
 import com.ridehailing.uber_system.service.RideService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class RideServiceImpl implements RideService {
@@ -34,26 +36,38 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
+    @Transactional
     public RideResponse requestRide(RideRequest request, String customerEmail) {
-        User customer=userRepository.findByEmail(customerEmail)
-                .orElseThrow(()->new RuntimeException("Customer not found"));
+        User customer = userRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        var nearbyDrivers=locationService.findNearbyDrivers(
+        var nearbyDrivers = locationService.findNearbyDrivers(
                 request.getPickupLat(), request.getPickupLng());
 
-        if(nearbyDrivers.isEmpty()){
+        if (nearbyDrivers.isEmpty()) {
             throw new RuntimeException("No drivers available");
         }
 
-        var selected=nearbyDrivers.get(0);
+        var selected = nearbyDrivers.get(0);
 
-        Driver driver=driverRepository.findById(selected.getDriverId())
+        Driver driver = driverRepository.findById(selected.getDriverId())
                 .orElseThrow();
+
+        boolean hasActiveRide =
+                rideRepository.findTopByDriverIdAndStatusIn(
+                        driver.getId(),
+                        List.of(RideStatus.ASSIGNED, RideStatus.STARTED)
+                ).isPresent();
+
+        if (hasActiveRide) {
+            throw new RuntimeException("Driver already has an active ride");
+        }
+
 
         driver.setAvailable(false);
         driverRepository.save(driver);
 
-        Ride ride=new Ride();
+        Ride ride = new Ride();
         ride.setCustomer(customer);
         ride.setDriver(driver);
         ride.setPickupLat(request.getPickupLat());
@@ -65,7 +79,7 @@ public class RideServiceImpl implements RideService {
 
         rideRepository.save(ride);
 
-        RideResponse response=new RideResponse();
+        RideResponse response = new RideResponse();
         response.setRideId(ride.getId());
         response.setDriverId(driver.getId());
         response.setDriverName(driver.getName());
@@ -76,21 +90,27 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public Ride getAssignedRide(String driverEmail) {
-        Driver driver=driverRepository.findByEmail(driverEmail)
+
+        Driver driver = driverRepository.findByEmail(driverEmail)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
+
         return rideRepository
-                .findByDriverIdAndStatus(driver.getId(), RideStatus.ASSIGNED)
-                .orElseThrow(() -> new RuntimeException("No assigned ride"));
+                .findTopByDriverIdAndStatusIn(
+                        driver.getId(),
+                        List.of(RideStatus.ASSIGNED, RideStatus.STARTED)
+                )
+                .orElseThrow(() -> new RuntimeException("No active ride"));
     }
+
 
     @Override
     public void startRide(Long rideId, String driverEmail) {
-        Ride ride=rideRepository.findById(rideId)
+        Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride not found"));
-        if(!ride.getDriver().getEmail().equals(driverEmail)){
+        if (!ride.getDriver().getEmail().equals(driverEmail)) {
             throw new RuntimeException("Unauthorized driver");
         }
-        if(ride.getStatus() != RideStatus.ASSIGNED){
+        if (ride.getStatus() != RideStatus.ASSIGNED) {
             throw new RuntimeException("Ride cannot be started");
         }
         ride.setStatus(RideStatus.STARTED);
@@ -100,20 +120,20 @@ public class RideServiceImpl implements RideService {
     @Override
     public void completeRide(Long rideId, String driverEmail) {
 
-        Ride ride=rideRepository.findById(rideId)
+        Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride not found"));
 
-        if(!ride.getDriver().getEmail().equals(driverEmail)){
+        if (!ride.getDriver().getEmail().equals(driverEmail)) {
             throw new RuntimeException("Unauthorized driver");
         }
 
-        if(ride.getStatus() != RideStatus.STARTED){
+        if (ride.getStatus() != RideStatus.STARTED) {
             throw new RuntimeException("Ride not started");
         }
 
         ride.setStatus(RideStatus.COMPLETED);
 
-        Driver driver=ride.getDriver();
+        Driver driver = ride.getDriver();
         driver.setAvailable(true);
 
         driverRepository.save(driver);

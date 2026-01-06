@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   completeRide,
   getAssignedRide,
   goOnline,
   startRide,
-  updateLocation,
 } from "../api/driverApi";
+
+import {
+  connectLocationSocket,
+  sendLocationUpdate,
+  disconnectLocationSocket,
+} from "../services/locationSocket";
 
 const DriverDashboard = () => {
   const [lat, setLat] = useState("");
@@ -18,10 +23,10 @@ const DriverDashboard = () => {
     setMsg("Driver is online");
   };
 
-  const handleUpdateLocation = async () => {
-    await updateLocation(Number(lat), Number(lng));
-    setMsg("Location updated");
-  };
+  // const handleUpdateLocation = async () => {
+  //   await updateLocation(Number(lat), Number(lng));
+  //   setMsg("Location updated");
+  // };
 
   const handleViewRide = async () => {
     const data = await getAssignedRide();
@@ -48,6 +53,31 @@ const DriverDashboard = () => {
     });
     setMsg("Ride completed");
   };
+
+  const handleUpdateLocation = () => {
+    sendLocationUpdate(Number(lat), Number(lng));
+    setMsg("📍 Location sent via WebSocket");
+  };
+
+  useEffect(() => {
+    connectLocationSocket(() => {
+      console.log("✅ Driver WebSocket connected");
+    });
+
+    return () => {
+      disconnectLocationSocket();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!lat || !lng) return;
+
+    const interval = setInterval(() => {
+      sendLocationUpdate(Number(lat), Number(lng));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [lat, lng]);
 
   return (
     <div>

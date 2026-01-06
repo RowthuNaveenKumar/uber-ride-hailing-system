@@ -58,29 +58,4 @@ public class LocationSocketController {
                 message
         );
     }
-
-
-//    @MessageMapping("/location/update")
-//    public void updateLocation(DriverLocationMessage message) {
-//
-//        System.out.println("🔥 Received WS Update: " + message);
-//
-//        DriverLocation location = repo.findByDriverId(message.getDriverId())
-//                .orElse(new DriverLocation());
-//
-//        location.setDriverId(message.getDriverId());
-//        location.setLatitude(message.getLatitude());
-//        location.setLongitude(message.getLongitude());
-//        location.setLastUpdated(LocalDateTime.now());
-//
-//        repo.save(location);
-//
-//        System.out.println("💾 Saved to DB: " + location);
-//
-//        // 🚀 Send to dynamic topic based on driverId
-//        messagingTemplate.convertAndSend(
-//                "/topic/location/" + message.getDriverId(),
-//                message
-//        );
-//    }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RideRepository extends JpaRepository<Ride, Long> {
-    Optional<Ride> findByDriverIdAndStatus(Long driverID, RideStatus status);
+//    Optional<Ride> findByDriverIdAndStatus(Long driverID, RideStatus status);
 
     Optional<Ride> findTopByDriverIdAndStatusIn(Long driverId, List<RideStatus> statuses);
 }

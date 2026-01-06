@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { requestRide, getRideStatus, getDriverLocation } from "../api/rideApi";
+import LiveMap from "../components/LiveMap";
+import { connectCustomerSocket } from "../services/customerLocationSocket";
 
 const CustomerHome = () => {
   const [pickupLat, setPickupLat] = useState("");
@@ -61,6 +63,17 @@ const CustomerHome = () => {
     return () => clearInterval(interval);
   }, [ride?.status, ride?.rideId]);
 
+  // websockets for live tracking of driver to subscribe purpose
+  useEffect(() => {
+    if (!ride?.driverId) return;
+
+    connectCustomerSocket(ride.driverId, (location) => {
+      setDriverLocation(location);
+    });
+
+    return () => disconnectCustomerSocket();
+  }, [ride?.driverId]);
+
   return (
     <div>
       <h2>Customer Home</h2>
@@ -111,6 +124,13 @@ const CustomerHome = () => {
           <p>Longitude: {driverLocation.longitude}</p>
           <p>Last updated: {driverLocation.lastUpdated}</p>
         </div>
+      )}
+      {ride && ride.status == "STARTED" && driverLocation && (
+        <LiveMap
+          pickup={{ lat: ride.pickupLat, lng: ride.pickupLng }}
+          drop={{ lat: ride.dropLat, lng: ride.dropLng }}
+          driver={driverLocation}
+        />
       )}
     </div>
   );
