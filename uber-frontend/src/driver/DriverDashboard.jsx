@@ -29,20 +29,28 @@ const DriverDashboard = () => {
   // };
 
   const handleViewRide = async () => {
-    const data = await getAssignedRide();
-    setRide(data);
+    try {
+      const data = await getAssignedRide();
+      setRide(data);
+    } catch (err) {
+      setMsg(err.response?.data || "No active ride");
+    }
   };
 
   const handleStartRide = async () => {
-    await startRide(ride.id);
+    try {
+      await startRide(ride.id);
 
-    // 🔥 re-fetch updated ride from backend
-    setRide({
-      ...ride,
-      status: "STARTED",
-    });
+      // 🔥 re-fetch updated ride from backend
+      setRide({
+        ...ride,
+        status: "STARTED",
+      });
 
-    setMsg("Ride started");
+      setMsg("Ride started");
+    } catch (err) {
+      setMsg(err.response?.data || "No assigned Ride")
+    }
   };
 
   const handleCompleteRide = async () => {

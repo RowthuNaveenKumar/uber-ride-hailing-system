@@ -27,7 +27,7 @@ const CustomerHome = () => {
       const data = await requestRide(rideRequest);
       setRide(data);
     } catch (error) {
-      setError("No drivers available or request failed");
+      setError(error.response?.data || "No drivers available or request failed");
     }
   };
 
