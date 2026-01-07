@@ -4,6 +4,10 @@ export const goOnline = async () => {
   return api.post("/driver/go-online");
 };
 
+export const goOffline = async () => {
+  return api.post("/driver/go-offline");
+};
+
 export const updateLocation = async (lat, lng) => {
   return api.post("/driver/location/update", {
     latitude: lat,

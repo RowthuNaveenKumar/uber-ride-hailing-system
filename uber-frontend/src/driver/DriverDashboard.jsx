@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   completeRide,
   getAssignedRide,
+  goOffline,
   goOnline,
   startRide,
 } from "../api/driverApi";
@@ -21,6 +22,15 @@ const DriverDashboard = () => {
   const handleGoOnline = async () => {
     await goOnline();
     setMsg("Driver is online");
+  };
+
+  const handleGoOffline = async () => {
+    try {
+      await goOffline();
+      setMsg("Driver is offline");
+    } catch (err) {
+      setMsg(err.response?.data || "Failed to go offline");
+    }
   };
 
   // const handleUpdateLocation = async () => {
@@ -49,7 +59,7 @@ const DriverDashboard = () => {
 
       setMsg("Ride started");
     } catch (err) {
-      setMsg(err.response?.data || "No assigned Ride")
+      setMsg(err.response?.data || "No assigned Ride");
     }
   };
 
@@ -67,6 +77,9 @@ const DriverDashboard = () => {
     setMsg("📍 Location sent via WebSocket");
   };
 
+  {
+    /* webSocket Connection */
+  }
   useEffect(() => {
     connectLocationSocket(() => {
       console.log("✅ Driver WebSocket connected");
@@ -78,20 +91,21 @@ const DriverDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!lat || !lng) return;
+    if (!lat || !lng || !ride) return;
 
     const interval = setInterval(() => {
       sendLocationUpdate(Number(lat), Number(lng));
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [lat, lng]);
+  }, [lat, lng, ride]);
 
   return (
     <div>
       <h2>Driver Dashboard</h2>
 
       <button onClick={handleGoOnline}>Go Online</button>
+      <button onClick={handleGoOffline}>Go Offline</button>
 
       <h4>Update Location</h4>
       <input

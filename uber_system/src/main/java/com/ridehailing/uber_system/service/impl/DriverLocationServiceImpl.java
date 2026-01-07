@@ -100,6 +100,10 @@ public class DriverLocationServiceImpl implements DriverLocationService {
         if (ride.getDriver() == null) {
             throw new RuntimeException("Driver not assigned yet");
         }
-        return locationRepository.findByDriverId(ride.getDriver().getId()).orElseThrow(() -> new RuntimeException("Driver location not available"));
+        if (ride.getStatus() != RideStatus.STARTED) {
+            throw new RuntimeException("Ride is not active");
+        }
+        return locationRepository.findByDriverId(ride.getDriver().getId())
+                .orElseThrow(() -> new RuntimeException("Driver location not available"));
     }
 }

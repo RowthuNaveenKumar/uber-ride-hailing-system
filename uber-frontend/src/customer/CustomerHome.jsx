@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { requestRide, getRideStatus, getDriverLocation } from "../api/rideApi";
 import LiveMap from "../components/LiveMap";
-import { connectCustomerSocket } from "../services/customerLocationSocket";
+import {
+  connectCustomerSocket,
+  disconnectCustomerSocket,
+} from "../services/customerLocationSocket";
 
 const CustomerHome = () => {
   const [pickupLat, setPickupLat] = useState("");
@@ -27,7 +30,9 @@ const CustomerHome = () => {
       const data = await requestRide(rideRequest);
       setRide(data);
     } catch (error) {
-      setError(error.response?.data || "No drivers available or request failed");
+      setError(
+        error.response?.data || "No drivers available or request failed"
+      );
     }
   };
 
@@ -65,14 +70,14 @@ const CustomerHome = () => {
 
   // websockets for live tracking of driver to subscribe purpose
   useEffect(() => {
-    if (!ride?.driverId) return;
+    if (!ride?.driverId || ride.status !== "STARTED") return;
 
     connectCustomerSocket(ride.driverId, (location) => {
       setDriverLocation(location);
     });
 
     return () => disconnectCustomerSocket();
-  }, [ride?.driverId]);
+  }, [ride?.driverId, ride?.status]);
 
   return (
     <div>
